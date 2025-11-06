@@ -1,92 +1,132 @@
 import { useState, useRef } from "react";
-
 import { add } from "./stringCalculator";
 
+// Inline style objects for consistent visual styling and readability
+const styles = {
+  main: {
+    padding: "20px",
+    backgroundColor: "#fff",
+    color: "#111", // Improved contrast for readability
+    minHeight: "100vh",
+  },
+  image: {
+    display: "block",
+    maxWidth: "100%",
+  },
+  form: {
+    maxWidth: 600,
+  },
+  label: {
+    display: "block",
+    marginTop: 16,
+    color: "#555",
+    fontWeight: 600,
+  },
+  textarea: {
+    margin: "10px 0",
+    color: "#222", // Better contrast for entered text
+    width: "100%",
+    minHeight: 60,
+    fontSize: "16px",
+  },
+  button: {
+    padding: "10px 24px",
+    backgroundColor: "#006994", // Darker blue for higher contrast
+    color: "#fff",
+    border: "none",
+    borderRadius: 4,
+    fontSize: "16px",
+    cursor: "pointer",
+    marginTop: 8,
+  },
+  resultText: (isError: boolean) => ({
+    color: isError ? "#c00" : "green", // Red for error, green for success
+    outline: "none",
+    fontWeight: 500,
+  }),
+  info: {
+    color: "#222",
+    fontSize: 15,
+  },
+};
+
 const App = () => {
+  // Application state: user input, calculation result, and possible error
   const [input, setInput] = useState("");
   const [result, setResult] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Ref for focusing on result after calculation — helps with screen readers
   const resultRef = useRef<HTMLParagraphElement>(null);
 
-  // Change: Use a button instead of div for semantics and keyboard accessibility
+  // Helper to focus on result area after each update
+  const focusResult = () => {
+    setTimeout(() => resultRef.current?.focus(), 0);
+  };
+
+  // Handles calculation with error handling for invalid/negative inputs
   const handleCalculate = () => {
     try {
       setError(null);
       const calculated = add(input);
       setResult(calculated);
-      // Focus the result content for screen readers (announce)
-      setTimeout(() => {
-        resultRef.current?.focus();
-      }, 0);
+      focusResult();
     } catch (e: any) {
       setResult(null);
       setError(e.message);
-      setTimeout(() => {
-        resultRef.current?.focus();
-      }, 0);
+      focusResult();
     }
   };
 
+  // Prevents form submission from refreshing the page, calls calculator logic
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleCalculate();
+  };
+
   return (
-    // Use <main> for page main content landmark
-    <main
-      style={{
-        padding: "20px",
-        backgroundColor: "#fff",
-        color: "#111", // Improved contrast from #aaa to #111 for better readability
-        minHeight: "100vh",
-      }}
-    >
+    // Use <main> to mark the primary content region for screen readers
+    <main style={styles.main}>
+      {/* 
+        Decorative image with descriptive alt text for accessibility.
+        Using block display ensures it adapts well in layout.
+      */}
       <img
-        src="https://images.unsplash.com/photo-1594352161389-11756265d1b5?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+        src="https://images.unsplash.com/photo-1594352161389-11756265d1b5?q=80&w=2574&auto=format&fit=crop"
         width={600}
         height={400}
-        alt="Calculator - pastel image with numbers" // Add meaningful alt text
-        style={{ display: "block", maxWidth: "100%" }}
+        alt="Calculator with numbers in soft pastel colors"
+        style={styles.image}
       />
 
-      {/* Use a single <h1> for the application title, then <h2> for sub-headings */}
+      {/* Single <h1> for page title (important for screen reader hierarchy) */}
       <h1>String Calculator</h1>
 
-      {/* Use <form> for proper semantics, improved accessibility and native enter/submit support */}
+      {/* 
+        Use <form> for semantic grouping and keyboard accessibility.
+        Allows 'Enter' key submission natively.
+      */}
       <form
-        // Prevent default page submit for SPA
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleCalculate();
-        }}
+        onSubmit={handleSubmit}
         aria-labelledby="calculator-title"
-        style={{ maxWidth: 600 }}
+        style={styles.form}
       >
         <h2 id="calculator-title" style={{ fontSize: "20px" }}>
           Enter numbers
         </h2>
 
         {/* 
-          Use <label> tied to textarea with htmlFor/id for screen reader and focus support.
-          Mark required fields as such.
+          <label> with htmlFor ties label to the textarea for screen readers.
+          Improves usability and click/focus behavior.
         */}
-        <label
-          htmlFor="numbersInput"
-          style={{
-            display: "block",
-            marginTop: 16,
-            color: "#555",
-            fontWeight: 600,
-          }}
-        >
+        <label htmlFor="numbersInput" style={styles.label}>
           Numbers (comma, newline, or custom delimiter):
         </label>
+
+        {/* Textarea input field with improved contrast and required aria attributes */}
         <textarea
           id="numbersInput"
-          style={{
-            margin: "10px 0",
-            color: "#222", // Improved contrast for entered text
-            width: "100%",
-            minHeight: 60,
-            fontSize: "16px",
-          }}
+          style={styles.textarea}
           placeholder="Enter numbers"
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -94,60 +134,45 @@ const App = () => {
           aria-describedby="input-desc"
         />
 
-        {/* Use actual <button> for semantic, accessible action control */}
+        {/* 
+          Use <button> instead of clickable <div> for semantic correctness.
+          Supports keyboard users (Enter/Space) and screen readers.
+        */}
         <button
           type="submit"
-          style={{
-            padding: "10px 24px",
-            backgroundColor: "#006994", // Darker blue for better contrast
-            color: "#fff",
-            border: "none",
-            borderRadius: 4,
-            fontSize: "16px",
-            cursor: "pointer",
-            marginTop: 8,
-          }}
-          // Add :focus style via inline for demo, but use CSS in production
+          style={styles.button}
+          aria-label="Calculate total from numbers input"
+          // Visual focus outline for keyboard navigation
           onFocus={(e) => (e.currentTarget.style.outline = "2px solid #222")}
           onBlur={(e) => (e.currentTarget.style.outline = "none")}
-          aria-label="Calculate total from numbers input"
         >
           Calculate
         </button>
       </form>
 
       {/* 
-        aria-live="assertive" to announce result changes to screen readers.
-        Use tabIndex to allow focus on result for screen readers after calculation/error.
+        Dynamic output area:
+        - aria-live="assertive" notifies screen readers immediately on change.
+        - tabIndex=-1 allows programmatic focus for accessibility feedback.
       */}
       <div
         aria-live="assertive"
         aria-atomic="true"
-        style={{ margin: "16px 0 0 0", minHeight: 24 }}
+        style={{ marginTop: 16, minHeight: 24 }}
       >
         {(result !== null || error) && (
-          <p
-            ref={resultRef}
-            tabIndex={-1}
-            style={{
-              color: error ? "#c00" : "green",
-              outline: "none",
-              fontWeight: 500,
-            }}
-          >
+          <p ref={resultRef} tabIndex={-1} style={styles.resultText(!!error)}>
             {error ? `Error: ${error}` : `Result: ${result}`}
           </p>
         )}
       </div>
 
       {/* 
-        Alert for info/tips — use role="status" for non-error messages.
-        Use more readable color contrast for message.
+        Non-critical informational message.
+        role="status" with aria-live="polite" announces updates calmly.
       */}
       <div role="status" aria-live="polite" style={{ marginTop: 20 }}>
-        <p style={{ color: "#222", fontSize: 15 }}>
-          Make sure you enter numbers correctly!
-        </p>
+        <p style={styles.info}>Make sure you enter numbers correctly!</p>
       </div>
     </main>
   );
