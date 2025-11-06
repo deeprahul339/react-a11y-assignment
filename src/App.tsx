@@ -63,10 +63,28 @@ const App = () => {
         Calculate
       </div>
 
-      {result !== null && <p style={{ color: "green" }}>Result: {result}</p>}
-
-      <div role="alert">
-        <p>Make sure you enter numbers correctly!</p>
+      {/* 
+        aria-live="assertive" to announce result changes to screen readers.
+        Use tabIndex to allow focus on result for screen readers after calculation/error.
+      */}
+      <div
+        aria-live="assertive"
+        aria-atomic="true"
+        style={{ margin: "16px 0 0 0", minHeight: 24 }}
+      >
+        {(result !== null || error) && (
+          <p
+            ref={resultRef}
+            tabIndex={-1}
+            style={{
+              color: error ? "#c00" : "green",
+              outline: "none",
+              fontWeight: 500,
+            }}
+          >
+            {error ? `Error: ${error}` : `Result: ${result}`}
+          </p>
+        )}
       </div>
     </main>
   );
