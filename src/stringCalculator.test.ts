@@ -7,4 +7,7 @@ describe("String Calculator", () => {
     // Edge case: explicit empty input should yield 0.
     expect(add("")).toBe(0);
   });
+  it("returns the number itself for single input", () => {
+    expect(add("1")).toBe(1);
+  });
 });
